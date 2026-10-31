@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>存在·计数 | 绝对完美</title>
+    <style>
+        :root {
+            --bg: #0a0a0a;
+            --fg: #f0f0f0;
+            --accent: #ff4d4d;
+            --glow: rgba(255, 77, 77, 0.7);
+            --transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--fg);
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+            perspective: 1000px;
+        }
+
+        .container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            text-align: center;
+            padding: 2rem;
+            transform-style: preserve-3d;
+        }
+
+        .counter-wrapper {
+            position: relative;
+            margin: 4rem 0;
+            transform-style: preserve-3d;
+        }
+
+        .counter {
+            font-size: 8rem;
+            font-weight: 700;
+            line-height: 1;
+            letter-spacing: -0.05em;
+            text-shadow: 0 0 20px var(--glow);
+            transition: var(--transition);
+            transform: translateZ(50px);
+        }
+
+        .counter::after {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 120%;
+            height: 120%;
+            background: radial-gradient(circle, var(--glow) 0%, transparent 70%);
+            transform: translate(-50%, -50%) translateZ(-10px);
+            opacity: 0.3;
+            z-index: -1;
+            animation: pulse 4s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 0.1; transform: translate(-50%, -50%) scale(0.9); }
+            100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1.1); }
+        }
+
+        .buttons {
+            display: flex;
+            gap: 2rem;
+            justify-content: center;
+            margin-top: 2rem;
+            transform: translateZ(30px);
+        }
+
+        button {
+            background: transparent;
+            color: var(--fg);
+            border: 2px solid rgba(255,255,255,0.2);
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            font-size: 2rem;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, var(--accent) 0%, transparent 70%);
+            opacity: 0;
+            transition: var(--transition);
+            z-index: -1;
+        }
+
+        button:hover {
+            transform: scale(1.1);
+            border-color: var(--accent);
+        }
+
+        button:hover::before {
+            opacity: 0.3;
+        }
+
+        button:active {
+            transform: scale(0.95);
+        }
+
+        .title {
+            font-size: 1rem;
+            font-weight: 300;
+            letter-spacing: 0.5em;
+            text-transform: uppercase;
+            opacity: 0.7;
+            margin-bottom: 1rem;
+            transform: translateZ(20px);
+        }
+
+        .subtitle {
+            font-size: 0.8rem;
+            opacity: 0.5;
+            max-width: 500px;
+            margin: 0 auto;
+            line-height: 1.6;
+            transform: translateZ(10px);
+        }
+
+        .particles {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: -2;
+        }
+
+        .particle {
+            position: absolute;
+            width: 2px;
+            height: 2px;
+            background: rgba(255,255,255,0.5);
+            border-radius: 50%;
+            animation: float 15s infinite linear;
+        }
+
+        @keyframes float {
+            to { transform: translateY(-100vh) rotate(360deg); }
+        }
+
+        .philosophy {
+            position: fixed;
+            bottom: 2rem;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-size: 0.7rem;
+            opacity: 0.3;
+            letter-spacing: 0.2em;
+        }
+
+        @media (max-width: 600px) {
+            .counter { font-size: 5rem; }
+            .buttons { gap: 1rem; }
+            button { width: 60px; height: 60px; font-size: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="particles" id="particles"></div>
+    
+    <div class="container">
+        <div class="title">存在·计数</div>
+        
+        <div class="counter-wrapper">
+            <div class="counter" id="counter">0</div>
+        </div>
+        
+        <div class="buttons">
+            <button id="decrement" aria-label="减少">−</button>
+            <button id="reset" aria-label="重置">↺</button>
+            <button id="increment" aria-label="增加">+</button>
+        </div>
+        
+        <p class="subtitle">每一次计数都是存在的确认。数字不仅是符号，更是存在的刻度。</p>
+    </div>
+    
+    <div class="philosophy">网页即存在，存在即网页</div>
+
+    <script>
+        // 核心功能：完美计数
+        const counterEl = document.getElementById('counter');
+        let count = 0;
+        
+        // 创建粒子背景
+        function createParticles() {
+            const container = document.getElementById('particles');
+            const particleCount = window.innerWidth < 600 ? 30 : 100;
+            
+            for (let i = 0; i < particleCount; i++) {
+                const particle = document.createElement('div');
+                particle.classList.add('particle');
+                
+                const size = Math.random() * 3 + 1;
+                const posX = Math.random() * 100;
+                const delay = Math.random() * 15;
+                const duration = 10 + Math.random() * 20;
+                const opacity = 0.2 + Math.random() * 0.5;
+                
+                particle.style.width = `${size}px`;
+                particle.style.height = `${size}px`;
+                particle.style.left = `${posX}%`;
+                particle.style.bottom = `-10px`;
+                particle.style.animationDelay = `${delay}s`;
+                particle.style.animationDuration = `${duration}s`;
+                particle.style.opacity = opacity;
+                
+                container.appendChild(particle);
+            }
+        }
+        
+        // 更新计数器显示
+        function updateCounter() {
+            counterEl.textContent = count;
+            
+            // 添加动画效果
+            counterEl.style.transform = 'translateZ(80px) scale(1.1)';
+            setTimeout(() => {
+                counterEl.style.transform = 'translateZ(50px) scale(1)';
+            }, 150);
+            
+            // 根据数值改变颜色
+            const hue = (count * 10) % 360;
+            document.documentElement.style.setProperty('--accent', `hsl(${hue}, 80%, 60%)`);
+            document.documentElement.style.setProperty('--glow', `hsla(${hue}, 80%, 60%, 0.7)`);
+        }
+        
+        // 事件监听
+        document.getElementById('increment').addEventListener('click', () => {
+            count++;
+            updateCounter();
+        });
+        
+        document.getElementById('decrement').addEventListener('click', () => {
+            count--;
+            updateCounter();
+        });
+        
+        document.getElementById('reset').addEventListener('click', () => {
+            count = 0;
+            updateCounter();
+        });
+        
+        // 键盘支持
+        document.addEventListener('keydown', (e) => {
+            if (e.key === '+' || e.key === '=') {
+                count++;
+                updateCounter();
+            } else if (e.key === '-' || e.key === '_') {
+                count--;
+                updateCounter();
+            } else if (e.key === '0' || e.key === 'r') {
+                count = 0;
+                updateCounter();
+            }
+        });
+        
+        // 初始化
+        createParticles();
+        updateCounter();
+        
+        // 添加视差效果
+        document.addEventListener('mousemove', (e) => {
+            const x = (e.clientX / window.innerWidth - 0.5) * 20;
+            const y = (e.clientY / window.innerHeight - 0.5) * 20;
+            
+            document.querySelector('.container').style.transform = 
+                `rotateY(${x}deg) rotateX(${-y}deg)`;
+        });
+    </script>
+</body>
+</html>
